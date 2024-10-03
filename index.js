@@ -5,7 +5,7 @@ const jwt_secret = "pankajZindaHai";
 const app = express();
 app.use(express.json());
 const { UserModel, TodoModel } = require("./db");
-mongoose.connect("mongodb+srv://pankaj42se:WgvutZKirptiTsBU@cluster0.wjy2t.mongodb.net/todo-app");
+mongoose.connect("mongodb+srv://pankaj42se:<password>@cluster0.wjy2t.mongodb.net/todo-app");
 app.post("/signup", async function(req, res) {
     const username = req.body.username;
     const password = req.body.password;
