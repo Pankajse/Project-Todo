@@ -1,90 +1,154 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const mongoose = require('mongoose');
-const jwt_secret = "pankajZindaHai";
+const mongoose = require("mongoose");
 const app = express();
+const jwt_secret = "IamPankajSingh";
+const {UserModel,TodoModel} = require("./db");
 app.use(express.json());
-const { UserModel, TodoModel } = require("./db");
 mongoose.connect("mongodb+srv://pankaj42se:sKjeJTZYUDQkCdIz@cluster0.wjy2t.mongodb.net/");
-app.post("/signup", async function(req, res) {
+app.post("/signup",async (req,res)=>{
     const username = req.body.username;
     const password = req.body.password;
     const name = req.body.name;
-
-    await UserModel.create({
-        username: username,
-        password: password,
-        name: name
-    });
-    
-    res.json({
-        message: "You are signed up"
-    })
+    try{
+        const user = await UserModel.findOne({
+            username : username
+        })
+        if(user){
+            res.json({msg : "User already exist"})
+        }else{
+        const newuser = await UserModel.create({
+            username : username,
+            password : password,
+            name : name
+        })
+        res.json({msg : "User created Successfully"});
+    }
+    }catch(error){
+        console.log(error);
+        res.json({msg : "User not created"});
+    }
 });
 
-app.post("/signin",async (req,res)=>{
+app.post("/signin", async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    const User = await UserModel.findOne({
-        username : username,
-        password : password
-    })
-    if(User){
-        const token = jwt.sign({id : User._id},jwt_secret);
-        res.json({
-            token : token,
-            msg : "SignIn Successful"
-        })
-    }else{
-        res.status(403).json({
-            msg : "User does not exist"
-        })
-    }
-})
-app.post("/todos", auth, async (req, res) => {
     try {
-        const user = req.user;
-        const title = req.body.title;
-        const done = req.body.done;
-
-        // Ensure user ID is used correctly
-        await TodoModel.create({
-            done: done,
-            title: title,
-            userid: user._id // Assuming the user object contains the _id
+        const user = await UserModel.findOne({
+            username: username,
+            password: password
         });
 
-        res.status(201).json({ msg: "Todo created successfully" });
-    } catch (error) {
-        res.status(500).json({ msg: "Failed to create todo", error });
-    }
-}); 
+        if (user) {
 
-app.get("/todos",auth,async (req,res)=>{
-    const user = req.user;
-    const tasks = await TodoModel.find({ userid: user._id});
-    console.log(tasks);
-    let todo = [];
-    for(let i of tasks){
-        todo.push(i.title);
+            const token = jwt.sign({ _id: user._id }, jwt_secret);
+            res.json({
+                token: token,
+                msg: "SignIn Successful"
+            });
+        } else {
+            res.status(402).json({ msg: "User not found" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(402).json({ msg: "Some problem occurred" });
     }
-    console.log(todo);
-    res.json({msg : "Successfull"});
-})
+});
+
+
 
 function auth(req,res,next){
     const token = req.headers.token;
     try{
-        const user = jwt.verify(token, jwt_secret);
-    if(user){
-        req.user = user;
-        next();
-    }else{
-        res.status(402).json("User not Exist");
-    }
+        const user = jwt.verify(token,jwt_secret);
+
+        if(user){
+            req.user = user;
+            next();
+        }else{
+            res.json({msg : "User not Exist"});
+        }
     }catch(error){
-        res.json({msg:"Failed"})
+        console.log(error);
+        res.status(500).json({ msg: "Failed to authenticate" });
     }
 }
+
+app.post("/createTodo",auth,async (req,res)=>{
+
+    const user = req.user;
+    const title = req.body.title;
+    const done = req.body.done;
+    try{
+        const response = await TodoModel.create({
+            title : title,
+            done : done,
+            userid : user._id
+        });
+        res.status(201).json({ msg: "Todo created successfully" });
+    }catch(error){
+        console.log(error);
+        res.status(500).json({ msg: "Failed to create todo"});
+    }
+});
+
+
+app.post("/deleteTodo", auth, async (req, res) => {
+    const user = req.user;
+    const todoid = req.body.todoid;
+
+    try {
+        const response = await TodoModel.findOneAndDelete({
+            userid: user._id,
+            _id: todoid
+        });
+
+        if (response) {
+            return res.status(200).json({ msg: "Todo Deleted" });
+        } else {
+            return res.status(404).json({ msg: "Todo not found" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Failed to delete todo" });
+    }
+});
+
+app.post("/updateTodo", auth, async (req, res) => {
+    const user = req.user;
+    const title = req.body.title;
+    const todoid = req.body.todoid;
+
+    try {
+        const response = await TodoModel.findOneAndUpdate(
+            { userid: user._id, _id: todoid },
+            { title: title }
+        );
+
+        if (response) {
+            return res.status(200).json({ msg: "Todo updated successfully" });
+        } else {
+            return res.status(404).json({ msg: "Todo not found or not authorized to update" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Failed to update todo" });
+    }
+});
+
+app.get("/todos",auth,async (req,res)=>{
+    const user = req.user;
+    try{
+        const todos = await TodoModel.find({
+            userid : user._id
+        });
+        console.log(todos);
+        res.json({todos : todos})
+    }catch(error){
+        console.log(error);
+        res.status(402).json({msg : "Failed in fetching Todos"});
+    }
+});
+
 
 app.listen(3000);
