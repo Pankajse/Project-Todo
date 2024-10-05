@@ -9,7 +9,6 @@ mongoose.connect("mongodb+srv://pankaj42se:sKjeJTZYUDQkCdIz@cluster0.wjy2t.mongo
 app.post("/signup",async (req,res)=>{
     const username = req.body.username;
     const password = req.body.password;
-    const name = req.body.name;
     try{
         const user = await UserModel.findOne({
             username : username
@@ -19,8 +18,7 @@ app.post("/signup",async (req,res)=>{
         }else{
         const newuser = await UserModel.create({
             username : username,
-            password : password,
-            name : name
+            password : password
         })
         res.json({msg : "User created Successfully"});
     }
@@ -150,5 +148,7 @@ app.get("/todos",auth,async (req,res)=>{
     }
 });
 
-
+app.get("/",(req,res)=>{
+    res.sendFile(__dirname + "/index.html");
+})
 app.listen(3000);

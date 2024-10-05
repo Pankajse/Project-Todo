@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+</head>
+<style>
+    body{
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        display:flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #container{
+        background-color: #fff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    input{
+        display: block;
+        margin:15px;
+        padding: 8px;
+        border-radius: 5px;
+        width: 250px;
+        border: 1px solid grey;
+    }
+    button{
+        display: block;
+        background-color: #4CAF50;
+        width: 250px;
+        padding: 8px;
+        margin: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        border: 1px solid grey;
+    }
+    .todobuttons{
+        display: inline-block;
+        background-color: aqua;
+        width:100px;
+        padding : 6px;
+        margin: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid grey;
+    }
+</style>
+<body>
+    <div id="container">
+        <h3>Enter details</h3>
+        <input type="text" id="sign_username" placeholder="Username">
+        <input type="text" id="sign_password" placeholder="Password">
+        <br>
+        <button onclick="sign_up()">Sign up</button>
+        <button onclick="sign_in()">Sign in</button>
+    </div>
+    <script>
+        function log() {
+            const body = document.querySelector("body");
+            const container = document.getElementById("container");
+            //remove Sign container
+            body.removeChild(container);
+            //Add Sign container
+            const logdiv = document.createElement("div");
+            const h3 = document.createElement("h3")
+            h3.innerHTML = "Enter details";
+            logdiv.setAttribute("id", "container");
+            const br = document.createElement("br");
+            const uinp = document.createElement("input");
+            uinp.setAttribute("type", "text");
+            uinp.setAttribute("id", "sign_username");
+            uinp.setAttribute("placeholder", "Username");
+            const pinp = document.createElement("input");
+            pinp.setAttribute("type", "text");
+            pinp.setAttribute("id", "sign_password");
+            pinp.setAttribute("placeholder", "Password");
+            upbut = document.createElement("button");
+            upbut.innerHTML = "Sign up";
+            upbut.setAttribute("onclick", "sign_up()")
+            inbut = document.createElement("button");
+            inbut.innerHTML = "Sign in";
+            inbut.setAttribute("onclick", "sign_in()");
+            logdiv.appendChild(h3);
+            logdiv.appendChild(br);
+            logdiv.appendChild(uinp);
+            logdiv.appendChild(pinp);
+            logdiv.appendChild(br);
+            logdiv.appendChild(upbut);
+            logdiv.appendChild(inbut);
+            body.appendChild(logdiv);
+        }
+
+        function aftersign(username) {
+            const body = document.querySelector("body");
+            const container = document.getElementById("container");
+            //remove Sign container
+            body.removeChild(container);
+            //Making new todo container
+            const name = document.createElement("h3");
+            name.innerHTML = username;
+            const div = document.createElement("div");
+            div.setAttribute("id", "container");
+            const addbut = document.createElement("button");
+            const todoinp = document.createElement("input");
+            todoinp.setAttribute("type", "text");
+            todoinp.setAttribute("id", "addtodos");
+            todoinp.setAttribute("placeholder", "Add");
+            addbut.setAttribute("onclick", "addtodo()");
+            addbut.innerHTML = "Add";
+            const outbutton = document.createElement("button");
+            outbutton.innerHTML = "Sign out";
+            outbutton.setAttribute("onclick", "sign_out()");
+            const tododiv = document.createElement("div");
+            tododiv.setAttribute("id", "todoitems");
+            div.appendChild(name);
+            div.appendChild(todoinp);
+            div.appendChild(addbut);
+            div.appendChild(outbutton);
+            div.appendChild(tododiv);
+            body.appendChild(div);
+        }
+        async function sign_up(){
+            const username = document.getElementById("sign_username").value;
+            const password = document.getElementById("sign_password").value;
+            const response = await axios.post("http://localhost:3000/signup",{
+                username : username,
+                password : password
+            })
+            sign_in();
+            alert(response.data.msg);
+        }
+        async function sign_in(){
+            const username = document.getElementById("sign_username").value;
+            const password = document.getElementById("sign_password").value;
+            const response = await axios.post("http://localhost:3000/signin",{
+                username : username,
+                password : password
+            });
+            if(response.data.token){
+                localStorage.setItem("token",response.data.token);
+                aftersign(username);
+                get();
+            }
+        }
+        let todos = [];
+        async function get() {
+            const token = localStorage.getItem("token");
+            if(token){
+                const response = await axios.get("http://localhost:3000/todos",{
+                    headers:{
+                        token : token
+                    }
+                });
+                todos = response.data.todos;
+                render();
+            }
+        }
+
+        async function addtodo(){
+            const todo = document.getElementById("addtodos");
+            const todoVal = todo.value;
+            todo.value="";
+            const token = localStorage.getItem("token");
+            const response = await axios.post("http://localhost:3000/createTodo",
+                {
+                    title : todoVal,
+                    done : false
+                },
+                {
+                    headers : {
+                        token : token
+                    }
+                }
+            );
+            get();
+        }
+
+        async function edit(id){
+            let str = prompt("Enter a task\n", "");
+            const token = localStorage.getItem("token");
+            const response = await axios.post("http://localhost:3000/updateTodo",
+            {
+                title : str,
+                    todoid : todos[id]._id
+            },
+            {
+                headers:{
+                    token : token
+                }
+            }
+            )
+            get();
+        }
+
+        async function deleteTodo(id){
+            const token = localStorage.getItem("token");
+            const response = await axios.post("http://localhost:3000/deleteTodo",
+            {
+                todoid : todos[id]._id
+            },
+            {
+                headers:{
+                    token : token
+                }
+            }
+            )
+            get();
+        }
+        function sign_out() {
+            localStorage.removeItem("token");
+            todos = [];
+            log();
+        }
+        function todoComponent(todo, i) {
+            const divEl = document.createElement("div");
+            divEl.setAttribute("id", i);
+            divEl.setAttribute("class", "task");
+            const h2El = document.createElement("h2");
+            h2El.innerHTML = todo.title;
+            const butEl = document.createElement("button");
+            butEl.innerHTML = "Delete";
+            butEl.setAttribute("onclick", "deleteTodo(" + i + ")");
+            butEl.setAttribute("class","todobuttons");
+            const edit = document.createElement("button");
+            edit.innerHTML = "Edit";
+            edit.setAttribute("onclick", "edit(" + i + ")");
+            edit.setAttribute("class","todobuttons");
+            divEl.appendChild(h2El);
+            const indiv = document.createElement("div");
+            indiv.appendChild(edit);
+            indiv.appendChild(butEl);
+            divEl.appendChild(indiv);
+            return divEl;
+            h1El.innerHTML = todo.title;
+        }
+        function render() {
+            document.querySelector("#todoitems").innerHTML = "";
+            for (let i = 0; i < todos.length; i++) {
+                const todo = todos[i];
+                const element = todoComponent(todo, i);
+                const body = document.querySelector("#todoitems");
+                body.appendChild(element);
+            }
+        }
+    </script>
+</body>
+</html>

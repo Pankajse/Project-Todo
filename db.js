@@ -4,8 +4,7 @@ const ObjectId = Schema.ObjectId;
 
 const User = new Schema({
     username : String,
-    password : String,
-    name : String
+    password : String
 })
 const Todo = new Schema({
     title : String,
