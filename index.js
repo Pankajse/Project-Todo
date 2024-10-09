@@ -1,30 +1,40 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const {z} = require("zod");
 const app = express();
 const jwt_secret = "IamPankajSingh";
 const {UserModel,TodoModel} = require("./db");
 app.use(express.json());
-mongoose.connect("mongodb+srv://pankaj42se:sKjeJTZYUDQkCdIz@cluster0.wjy2t.mongodb.net/");
+mongoose.connect("mongodb+srv://pankaj42se:sKjeJTZYUDQkCdIz@cluster0.wjy2t.mongodb.net/Todo-app");
 app.post("/signup",async (req,res)=>{
-    const username = req.body.username;
-    const password = req.body.password;
-    try{
-        const user = await UserModel.findOne({
-            username : username
-        })
-        if(user){
-            res.json({msg : "User already exist"})
+    const requiredBody = z.object({
+        username : z.string().min(3,"Enter minimum 3 characters in Username"),
+        password : z.string().min(5,"Enter minimum 5 characters Password")
+        .max(30,"Maximum 30 characters allowed only")
+        .regex(/[A-Z]/,"Password must contain one capital letter")
+        .regex(/\d/,"Password must contain one number")
+        .regex(/[@$!%*?&#]/,"Password must contain one special character")
+    })
+    const parsedBody = requiredBody.safeParse(req.body);
+    if(!parsedBody.success){
+        if(parsedBody.error.format().username){
+            return res.json({msg : parsedBody.error.format().username._errors[0]})
         }else{
-        const newuser = await UserModel.create({
-            username : username,
-            password : password
-        })
-        res.json({msg : "User created Successfully"});
+            return res.json({msg : parsedBody.error.format().password._errors[0]})
+        }
     }
+    try{
+        const hashPassword = await bcrypt.hash(req.body.password,5);
+        const newuser = await UserModel.create({
+            username : req.body.username,
+            password : hashPassword
+        })
+        res.json({msg : "User created Successfully",signup : true});
     }catch(error){
         console.log(error);
-        res.json({msg : "User not created"});
+        res.json({msg : "User already exist",signup : false});
     }
 });
 
@@ -33,11 +43,14 @@ app.post("/signin", async (req, res) => {
     const password = req.body.password;
     try {
         const user = await UserModel.findOne({
-            username: username,
-            password: password
+            username: username
         });
-
-        if (user) {
+        if(!user){
+            res.status(402).json({ msg: "User not found" });
+            return;
+        }
+        const match = await bcrypt.compare(password,user.password);
+        if (match) {
 
             const token = jwt.sign({ _id: user._id }, jwt_secret);
             res.json({
@@ -45,7 +58,7 @@ app.post("/signin", async (req, res) => {
                 msg: "SignIn Successful"
             });
         } else {
-            res.status(402).json({ msg: "User not found" });
+            res.status(402).json({ msg: "Wrong password" });
         }
     } catch (error) {
         console.log(error);
@@ -140,7 +153,6 @@ app.get("/todos",auth,async (req,res)=>{
         const todos = await TodoModel.find({
             userid : user._id
         });
-        console.log(todos);
         res.json({todos : todos})
     }catch(error){
         console.log(error);

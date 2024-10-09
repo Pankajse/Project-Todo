@@ -50,6 +50,9 @@
         cursor: pointer;
         border: 1px solid grey;
     }
+    #msg{
+        color: red;
+    }
 </style>
 <body>
     <div id="container">
@@ -59,6 +62,7 @@
         <br>
         <button onclick="sign_up()">Sign up</button>
         <button onclick="sign_in()">Sign in</button>
+        <div id="msg"></div>
     </div>
     <script>
         function log() {
@@ -86,6 +90,8 @@
             inbut = document.createElement("button");
             inbut.innerHTML = "Sign in";
             inbut.setAttribute("onclick", "sign_in()");
+            const msgbox = document.createElement("div");
+            msgbox.setAttribute("id","msg");
             logdiv.appendChild(h3);
             logdiv.appendChild(br);
             logdiv.appendChild(uinp);
@@ -93,6 +99,7 @@
             logdiv.appendChild(br);
             logdiv.appendChild(upbut);
             logdiv.appendChild(inbut);
+            logdiv.appendChild(msgbox);
             body.appendChild(logdiv);
         }
 
@@ -118,8 +125,11 @@
             outbutton.setAttribute("onclick", "sign_out()");
             const tododiv = document.createElement("div");
             tododiv.setAttribute("id", "todoitems");
+            const msgbox = document.createElement("div");
+            msgbox.setAttribute("id","msg");
             div.appendChild(name);
             div.appendChild(todoinp);
+            div.appendChild(msgbox);
             div.appendChild(addbut);
             div.appendChild(outbutton);
             div.appendChild(tododiv);
@@ -132,8 +142,11 @@
                 username : username,
                 password : password
             })
-            sign_in();
-            alert(response.data.msg);
+            document.getElementById("msg").innerHTML=response.data.msg;
+            setTimeout(()=>{document.getElementById("msg").innerHTML=""},3000);
+            if(response.data.signup){
+                sign_in();
+            }
         }
         async function sign_in(){
             const username = document.getElementById("sign_username").value;
@@ -166,6 +179,11 @@
             const todo = document.getElementById("addtodos");
             const todoVal = todo.value;
             todo.value="";
+            if(todoVal.length < 2){
+                document.getElementById("msg").innerHTML = "Todo Length greater than one";
+                setTimeout(()=>{document.getElementById("msg").innerHTML =""},3000);
+                return;
+            }
             const token = localStorage.getItem("token");
             const response = await axios.post("http://localhost:3000/createTodo",
                 {
