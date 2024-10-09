@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Todo App</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
 </head>
 <style>
@@ -138,7 +138,7 @@
         async function sign_up(){
             const username = document.getElementById("sign_username").value;
             const password = document.getElementById("sign_password").value;
-            const response = await axios.post("http://localhost:3000/signup",{
+            const response = await axios.post("https://project-todo-d99t.onrender.com/signup",{
                 username : username,
                 password : password
             })
@@ -151,7 +151,7 @@
         async function sign_in(){
             const username = document.getElementById("sign_username").value;
             const password = document.getElementById("sign_password").value;
-            const response = await axios.post("http://localhost:3000/signin",{
+            const response = await axios.post("https://project-todo-d99t.onrender.com/signin",{
                 username : username,
                 password : password
             });
@@ -165,7 +165,7 @@
         async function get() {
             const token = localStorage.getItem("token");
             if(token){
-                const response = await axios.get("http://localhost:3000/todos",{
+                const response = await axios.get("https://project-todo-d99t.onrender.com/todos",{
                     headers:{
                         token : token
                     }
@@ -185,7 +185,7 @@
                 return;
             }
             const token = localStorage.getItem("token");
-            const response = await axios.post("http://localhost:3000/createTodo",
+            const response = await axios.post("https://project-todo-d99t.onrender.com/createTodo",
                 {
                     title : todoVal,
                     done : false
@@ -202,7 +202,7 @@
         async function edit(id){
             let str = prompt("Enter a task\n", "");
             const token = localStorage.getItem("token");
-            const response = await axios.post("http://localhost:3000/updateTodo",
+            const response = await axios.post("https://project-todo-d99t.onrender.com/updateTodo",
             {
                 title : str,
                     todoid : todos[id]._id
@@ -218,7 +218,7 @@
 
         async function deleteTodo(id){
             const token = localStorage.getItem("token");
-            const response = await axios.post("http://localhost:3000/deleteTodo",
+            const response = await axios.post("https://project-todo-d99t.onrender.com/deleteTodo",
             {
                 todoid : todos[id]._id
             },
