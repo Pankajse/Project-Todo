@@ -7,7 +7,7 @@ const app = express();
 const jwt_secret = "IamPankajSingh";
 const {UserModel,TodoModel} = require("./db");
 app.use(express.json());
-mongoose.connect("mongodb+srv://pankaj42se:sKjeJTZYUDQkCdIz@cluster0.wjy2t.mongodb.net/Todo-app");
+mongoose.connect("");
 app.post("/signup",async (req,res)=>{
     const requiredBody = z.object({
         username : z.string().min(3,"Enter minimum 3 characters in Username"),
